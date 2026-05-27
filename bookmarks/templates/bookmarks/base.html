@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}knownlinks{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.1/bundles/datastar.js"></script>
+    <script>
+        // Resolve dynamic user theme preference
+        const userPrefTheme = '{{ preference.theme|default:"dark" }}';
+        const isSystemLight = userPrefTheme === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches;
+        const isLight = userPrefTheme === 'light' || isSystemLight;
+
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        bgSidebar: isLight ? '#f3f3f5' : '#1e1e20',
+                        bgMain: isLight ? '#fafafc' : '#242426',
+                        bgHover: isLight ? '#e8e8ea' : '#2b2b2d',
+                        bgInput: isLight ? '#ffffff' : '#18181a',
+                        bgTag: isLight ? '#e2e2e4' : '#3b3b3d',
+                        borderColor: isLight ? '#dcdcdc' : '#38383a',
+                        textPrimary: isLight ? '#1c1c1e' : '#e5e5e7',
+                        textMuted: isLight ? '#6c6c70' : '#8a8a8e',
+                        accent: '#ffb340',
+                        buttonBg: isLight ? '#e2e2e4' : '#38383a'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #4a4a4c; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-bgMain text-textPrimary h-screen flex overflow-hidden antialiased text-[13px]">
+    {% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,138 @@
+{% extends "bookmarks/base.html" %}
+
+{% block content %}
+<div class="w-full h-full flex overflow-hidden" 
+     data-store="{ active_folder_id: {{ active_folder_id|default:'null' }}, sidebar_width: {{ preference.sidebar_width }}, theme: '{{ preference.theme }}' }">
+    
+    <!-- Hidden Inputs to bind to Datastar signals for persistent saving -->
+    <input type="hidden" id="pref-sidebar-width-input" data-bind="sidebar_width" value="{{ preference.sidebar_width }}">
+    <input type="hidden" id="pref-theme-input" data-bind="theme" value="{{ preference.theme }}">
+    <button id="save-pref-btn" class="hidden" data-on:click="@post('{% url 'bookmarks:save_preference' %}')"></button>
+
+    <!-- Sidebar Panel with dynamic inline width -->
+    <aside id="sidebar-panel" class="bg-bgSidebar border-r border-borderColor flex flex-col h-full shrink-0" 
+           style="width: {{ preference.sidebar_width }}%; min-width: 200px; max-width: 45%;">
+        
+        <div class="px-4 py-3 flex items-center justify-between group cursor-pointer hover:bg-bgHover">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-xs text-gray-300">
+                    <i class="fa-regular fa-user"></i>
+                </div>
+                <span class="font-medium text-sm">{{ user.username }}</span>
+            </div>
+            <form action="{% url 'bookmarks:logout' %}" method="post" class="m-0 flex items-center">
+                {% csrf_token %}
+                <button type="submit" title="Logout" class="flex items-center justify-center">
+                    <i class="fa-solid fa-right-from-bracket text-textMuted hover:text-textPrimary transition-colors"></i>
+                </button>
+            </form>
+        </div>
+
+        <div class="flex-1 overflow-y-auto pb-4">
+            <ul class="px-2 space-y-[2px]">
+                <li class="flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-bgHover cursor-pointer group {% if active_folder_id is None %}bg-bgHover font-bold text-accent{% else %}text-textMuted hover:text-textPrimary{% endif %}"
+                    data-on:click="@get('{% url 'bookmarks:navigate_all' %}')">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-cloud text-textMuted w-4 text-center group-hover:text-accent transition-colors"></i> 
+                        <span class="transition-colors">All bookmarks</span>
+                    </div>
+                </li>
+            </ul>
+
+            <div class="mt-6 px-4 mb-1">
+                <span class="text-textMuted text-[11px] uppercase font-semibold tracking-wider">Collections</span>
+            </div>
+            
+            {% include "bookmarks/partials/collections_list.html" %}
+        </div>
+
+        <!-- Dynamic User Preferences Theme Panel -->
+        <div class="p-4 border-t border-borderColor flex items-center justify-between select-none">
+            <span class="text-textMuted text-xs font-medium">Theme</span>
+            <div class="flex items-center gap-1 bg-bgInput p-0.5 rounded border border-borderColor">
+                <button title="Light Theme" class="p-1 px-1.5 rounded transition-colors {% if preference.theme == 'light' %}bg-bgHover text-accent font-semibold{% else %}text-textMuted hover:text-textPrimary{% endif %}"
+                        onclick="setTheme('light')">
+                    <i class="fa-regular fa-sun text-xs"></i>
+                </button>
+                <button title="Dark Theme" class="p-1 px-1.5 rounded transition-colors {% if preference.theme == 'dark' %}bg-bgHover text-accent font-semibold{% else %}text-textMuted hover:text-textPrimary{% endif %}"
+                        onclick="setTheme('dark')">
+                    <i class="fa-regular fa-moon text-xs"></i>
+                </button>
+                <button title="System Default" class="p-1 px-1.5 rounded transition-colors {% if preference.theme == 'system' %}bg-bgHover text-accent font-semibold{% else %}text-textMuted hover:text-textPrimary{% endif %}"
+                        onclick="setTheme('system')">
+                    <i class="fa-solid fa-desktop text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Draggable resizer dividing bar -->
+    <div id="resizer" class="w-[3px] hover:w-1 cursor-col-resize bg-borderColor/60 hover:bg-accent transition-all h-full shrink-0"></div>
+
+    <!-- Main bookmarks listing panel aligned dynamic with Calc -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <header class="h-[52px] border-b border-borderColor flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center flex-1 max-w-2xl bg-bgInput rounded-md px-3 py-1.5 border border-transparent focus-within:border-gray-600 transition-colors">
+                <i class="fa-solid fa-magnifying-glass text-textMuted text-sm"></i>
+                <input type="text" class="bg-transparent border-none outline-none text-sm text-textPrimary w-full ml-2 placeholder-gray-500" placeholder="Search...">
+            </div>
+        </header>
+
+        {% include "bookmarks/partials/link_list_container.html" %}
+    </main>
+</div>
+
+<!-- Drag resizing handler -->
+<script>
+    (function() {
+        const sidebar = document.getElementById('sidebar-panel');
+        const resizer = document.getElementById('resizer');
+        
+        resizer.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            document.body.classList.add('cursor-col-resize', 'select-none');
+            
+            function onMouseMove(moveEvent) {
+                let percentage = (moveEvent.clientX / window.innerWidth) * 100;
+                if (percentage < 15) percentage = 15;
+                if (percentage > 45) percentage = 45;
+                
+                sidebar.style.width = percentage + '%';
+            }
+            
+            function onMouseUp() {
+                document.body.classList.remove('cursor-col-resize', 'select-none');
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+                
+                let finalWidth = parseFloat(sidebar.style.width);
+                let el = document.getElementById('pref-sidebar-width-input');
+                if (el) {
+                    el.value = Math.round(finalWidth);
+                    el.dispatchEvent(new Event('input'));
+                }
+                
+                // Persist new layout width to SQLite DB reactively
+                document.getElementById('save-pref-btn').click();
+            }
+            
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        });
+    })();
+
+    function setTheme(val) {
+        let el = document.getElementById('pref-theme-input');
+        if (el) {
+            el.value = val;
+            el.dispatchEvent(new Event('input'));
+        }
+        document.getElementById('save-pref-btn').click();
+        
+        // Reload page shortly to apply the dynamic Tailwind palette mapping
+        setTimeout(function() {
+            window.location.reload();
+        }, 120);
+    }
+</script>
+{% endblock %}

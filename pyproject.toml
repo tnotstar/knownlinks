@@ -1,0 +1,10 @@
+[project]
+name = "knownlinks"
+version = "0.1.0"
+description = "Personal knowledge management system based upon links"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "datastar-py>=1.0.0",
+    "django>=6.0.5",
+]

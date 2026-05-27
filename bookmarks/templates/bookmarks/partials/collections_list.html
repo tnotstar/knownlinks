@@ -1,0 +1,5 @@
+<ul id="collections-list" class="px-2 space-y-[2px]">
+    {% for h in hierarchies %}
+        {% include "bookmarks/partials/folder_node.html" with h=h %}
+    {% endfor %}
+</ul>

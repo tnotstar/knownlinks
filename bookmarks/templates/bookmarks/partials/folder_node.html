@@ -1,0 +1,23 @@
+<li id="folder-node-{{ h.id }}" class="space-y-[2px]">
+    <div class="flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-bgHover cursor-pointer group {% if active_folder_id == h.id %}bg-bgHover font-bold text-accent{% else %}text-textMuted hover:text-textPrimary{% endif %}"
+         data-on:click="@get('{% url 'bookmarks:navigate' h.id %}')">
+        <div class="flex items-center gap-2 min-w-0">
+            {% if h.children.exists %}
+                <i class="fa-solid {% if h.id in expanded_folders %}fa-caret-down{% else %}fa-caret-right{% endif %} text-textMuted text-[10px] w-2 flex-shrink-0"></i>
+            {% else %}
+                <span class="w-2 flex-shrink-0"></span>
+            {% endif %}
+            <i class="fa-regular fa-folder text-textMuted w-4 text-center group-hover:text-accent transition-colors flex-shrink-0"></i>
+            <span class="truncate transition-colors">{{ h.name }}</span>
+        </div>
+        <span class="text-textMuted text-xs font-normal flex-shrink-0 ml-2">{{ h.links.count }}</span>
+    </div>
+    
+    {% if h.id in expanded_folders and h.children.exists %}
+    <ul class="pl-3 border-l border-borderColor/40 ml-[13px] space-y-[2px]">
+        {% for child in h.children.all %}
+            {% include "bookmarks/partials/folder_node.html" with h=child %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</li>

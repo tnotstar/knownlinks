@@ -1,0 +1,31 @@
+<div id="bookmark-list-container" class="flex-1 overflow-y-auto px-6 py-2">
+    <div class="max-w-2xl w-full flex flex-col">
+        {% for link in links %}
+        <article class="flex gap-4 py-4 border-b border-borderColor group">
+            <div class="w-12 h-12 bg-gray-800 rounded-lg shrink-0 overflow-hidden border border-borderColor flex items-center justify-center">
+                <i class="fa-solid fa-link text-gray-500 text-xl"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="text-[14px] font-semibold text-textPrimary truncate group-hover:text-blue-400 cursor-pointer">
+                    <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.title }}</a>
+                </h3>
+                <p class="text-textMuted text-[13px] mt-0.5 truncate">{{ link.description|default:"" }}</p>
+                <div class="flex items-center gap-3 text-textMuted text-[11px] mt-2 font-medium">
+                    <span class="flex items-center gap-1.5 text-textPrimary cursor-pointer hover:underline">
+                        <i class="fa-regular fa-folder text-textMuted"></i> {{ link.hierarchy.name }}
+                    </span>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span>{{ link.url|truncatechars:40 }}</span>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span>{{ link.created_at|date:"M j, Y" }}</span>
+                </div>
+            </div>
+        </article>
+        {% empty %}
+        <div class="py-12 flex flex-col items-center justify-center text-center text-textMuted">
+            <i class="fa-regular fa-folder-open text-4xl mb-3 opacity-50"></i>
+            <p>No bookmarks found in this folder.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
